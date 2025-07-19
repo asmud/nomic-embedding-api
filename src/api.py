@@ -317,7 +317,43 @@ async def stream_embeddings(texts: List[str], model: str, task_type: str, reques
         yield f"data: {json.dumps(error_response)}\n\n"
 
 
-@app.post("/v1/embeddings")
+@app.post("/v1/embeddings", 
+          summary="Create text embeddings",
+          description="""
+Generate embeddings for input text using Nomic models. 
+
+This endpoint processes text inputs and returns high-dimensional vector representations
+that capture semantic meaning. Features include:
+
+- **Async processing** with smart batching for optimal performance
+- **In-memory and Redis caching** to reduce duplicate computations  
+- **Streaming responses** for real-time applications
+- **Request prioritization** for queue management
+- **Rate limiting** and concurrent request controls
+
+**Examples:**
+
+Single text:
+```json
+{
+  "input": "Hello world",
+  "model": "nomic-embed-text-v2-moe-distilled"
+}
+```
+
+Multiple texts with streaming:
+```json
+{
+  "input": ["Hello world", "How are you?"],
+  "model": "nomic-embed-text-v2-moe-distilled",
+  "stream": true,
+  "priority": "high"
+}
+```
+
+**Note:** The model returns embeddings with fixed dimensions based on the selected model preset.
+          """,
+          response_description="Embedding vectors for the input text(s)")
 async def create_embeddings(request: EmbeddingRequest):
     """Create embeddings with async processing, batching, caching, and optional streaming"""
     async with request_semaphore:  # Limit concurrent requests

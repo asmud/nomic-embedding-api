@@ -3,13 +3,36 @@ from pydantic import BaseModel, Field
 
 
 class EmbeddingRequest(BaseModel):
-    input: Union[str, List[str]] = Field(..., description="Text or list of texts to embed")
-    model: str = Field(default="nomic-embed-text-v2-moe-distilled", description="Model to use for embedding")
-    encoding_format: str = Field(default="float", description="Encoding format (float or base64)")
-    dimensions: Optional[int] = Field(default=None, description="Number of dimensions to return")
-    user: Optional[str] = Field(default=None, description="User identifier")
-    stream: Optional[bool] = Field(default=False, description="Whether to stream the response")
-    priority: Optional[Literal["low", "normal", "high", "urgent"]] = Field(default="normal", description="Request priority level")
+    input: Union[str, List[str]] = Field(
+        ..., 
+        description="Text or list of texts to embed. Can be a single string or array of strings.",
+        examples=["Hello world", ["Hello world", "How are you?"]]
+    )
+    model: str = Field(
+        default="nomic-embed-text-v2-moe-distilled", 
+        description="Model identifier to use for generating embeddings. Currently supports 'nomic-embed-text-v2-moe-distilled'.",
+        examples=["nomic-embed-text-v2-moe-distilled"]
+    )
+    encoding_format: str = Field(
+        default="float", 
+        description="Format for returned embeddings. 'float' returns arrays of floating point numbers, 'base64' returns base64-encoded strings.",
+        examples=["float", "base64"]
+    )
+    user: Optional[str] = Field(
+        default=None, 
+        description="Unique identifier representing your end-user for tracking and rate limiting purposes.",
+        examples=["user-123", "session-abc"]
+    )
+    stream: Optional[bool] = Field(
+        default=False, 
+        description="Whether to stream back partial progress as embeddings are generated. If true, returns Server-Sent Events.",
+        examples=[False, True]
+    )
+    priority: Optional[Literal["low", "normal", "high", "urgent"]] = Field(
+        default="normal", 
+        description="Request priority level for queue processing. Higher priority requests are processed first. Options: 'low', 'normal', 'high', 'urgent'.",
+        examples=["normal", "high"]
+    )
 
 
 class EmbeddingData(BaseModel):

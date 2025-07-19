@@ -112,18 +112,6 @@ def test_embeddings_empty_input():
     assert response.status_code == 400
 
 
-def test_embeddings_with_dimensions():
-    """Test embeddings endpoint with dimensions parameter"""
-    payload = {
-        "input": "Test text",
-        "model": "nomic-embed-text-v2-moe-distilled",
-        "dimensions": 256
-    }
-    
-    response = client.post("/v1/embeddings", json=payload)
-    # Should work regardless of model availability
-    assert response.status_code in [200, 503, 500]
-
 
 def test_embeddings_with_user():
     """Test embeddings endpoint with user parameter"""
