@@ -1,32 +1,25 @@
+import asyncio
+import json
 import logging
 import time
-import asyncio
 import uuid
-from typing import List, Union
 from contextlib import asynccontextmanager
+from typing import List, Union
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-import uvicorn
-import json
 
-from .config import LOG_LEVEL, MAX_CONCURRENT_REQUESTS, MODEL_POOL_SIZE, ENABLE_MULTI_GPU, REDIS_ENABLED, ENABLE_DYNAMIC_MEMORY, ENABLE_HARDWARE_OPTIMIZATION
-from .models import EmbeddingModel
-from .batch_processor import batch_processor, RequestPriority
-from .cache import get_cache_stats, clear_cache
+from .batch_processor import RequestPriority, batch_processor
+from .cache import clear_cache, get_cache_stats
+from .config import (ENABLE_DYNAMIC_MEMORY, ENABLE_HARDWARE_OPTIMIZATION,
+                     ENABLE_MULTI_GPU, LOG_LEVEL, MAX_CONCURRENT_REQUESTS,
+                     MODEL_POOL_SIZE, REDIS_ENABLED)
 from .model_pool import ModelPool, model_pool
-from .schemas import (
-    EmbeddingRequest, 
-    EmbeddingResponse, 
-    EmbeddingData, 
-    EmbeddingUsage,
-    ErrorResponse,
-    HealthResponse,
-    ModelsResponse,
-    StreamingEmbeddingChunk,
-    StreamingEmbeddingResponse
-)
+from .models import EmbeddingModel
+from .schemas import (EmbeddingData, EmbeddingRequest, EmbeddingResponse,
+                     EmbeddingUsage, HealthResponse, ModelInfo, ModelsResponse,
+                     StreamingEmbeddingChunk, StreamingEmbeddingResponse)
 
 # Configure logging from environment
 logging.basicConfig(level=getattr(logging, LOG_LEVEL))
@@ -261,8 +254,21 @@ def count_tokens(text: str) -> int:
 
 
 def get_model_instance(model_name: str):
+    from .config import MODEL_PRESETS
+    
+    # Validate that the requested model exists in presets
+    if model_name not in MODEL_PRESETS:
+        available_models = list(MODEL_PRESETS.keys())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Model '{model_name}' not found. Available models: {available_models}"
+        )
+    
     if embedding_model:
         return embedding_model
+    elif model_pool:
+        # For model pool, we'll let the pool handle the model selection
+        return True  # Signal that models are available
     else:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -337,7 +343,7 @@ Single text:
 ```json
 {
   "input": "Hello world",
-  "model": "nomic-embed-text-v2-moe-distilled"
+  "model": "nomic-v1.5"
 }
 ```
 
@@ -345,7 +351,7 @@ Multiple texts with streaming:
 ```json
 {
   "input": ["Hello world", "How are you?"],
-  "model": "nomic-embed-text-v2-moe-distilled",
+  "model": "nomic-moe-768",
   "stream": true,
   "priority": "high"
 }
@@ -450,17 +456,43 @@ async def create_embeddings(request: EmbeddingRequest):
             )
 
 
-@app.get("/v1/models", response_model=ModelsResponse)
+@app.get("/v1/models", 
+          response_model=ModelsResponse,
+          summary="List available models",
+          description="""
+List all available embedding models with their detailed configurations.
+
+Returns information about each model preset including:
+- Model preset ID (use this in requests)
+- HuggingFace model name  
+- Embedding dimensions
+- Model description and use cases
+- Library used (SentenceTransformers or Model2Vec)
+
+**Available Models:**
+- `nomic-v1.5`: Latest Nomic v1.5 model (768D) - **Recommended**
+- `nomic-moe-768`: Nomic MoE model (768D) - High accuracy
+- `nomic-moe-256`: Distilled model (256D) - Speed optimized
+""")
 async def list_models():
-    models = [
-        {
-            "id": "nomic-embed-text-v2-moe-distilled",
-            "object": "model",
-            "created": int(time.time()),
-            "owned_by": "nomic-ai"
-        }
-    ]
+    """List all available embedding models with their configurations"""
+    from .config import MODEL_PRESETS
     
+    models = []
+    created_timestamp = int(time.time())
+    
+    for preset_id, config in MODEL_PRESETS.items():
+        model_info = ModelInfo(
+            id=preset_id,
+            object="model",
+            created=created_timestamp,
+            owned_by="nomic-ai",
+            model_name=config["model_name"],
+            dimensions=config["dimensions"],
+            description=config["description"],
+            use_model2vec=config["use_model2vec"]
+        )
+        models.append(model_info)
     
     return ModelsResponse(
         object="list",
@@ -521,19 +553,29 @@ async def clear_caches(clear_redis: bool = False):
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    if not embedding_model:
+    from .config import CURRENT_MODEL_CONFIG, EMBEDDING_MODEL
+    
+    # Check if any model system is available
+    if embedding_model:
+        # Single model instance
+        model_instance = embedding_model
+        return HealthResponse(
+            status="healthy",
+            model=model_instance.model_name,
+            embedding_dimension=model_instance.get_embedding_dimension()
+        )
+    elif model_pool and model_pool.is_healthy():
+        # Model pool is available and healthy
+        return HealthResponse(
+            status="healthy",
+            model=f"{EMBEDDING_MODEL} (pool: {model_pool.pool_size} instances)",
+            embedding_dimension=CURRENT_MODEL_CONFIG["dimensions"]
+        )
+    else:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No models loaded"
+            detail="No models loaded or model pool unhealthy"
         )
-    
-    model_instance = embedding_model
-    
-    return HealthResponse(
-        status="healthy",
-        model=model_instance.model_name,
-        embedding_dimension=model_instance.get_embedding_dimension()
-    )
 
 
 @app.get("/")
@@ -605,11 +647,4 @@ async def root():
     }
 
 
-if __name__ == "__main__":
-    uvicorn.run(
-        "src.api:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+# Development server entry point moved to main.py for consistency

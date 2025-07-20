@@ -63,7 +63,7 @@ docker run -d \
   -v $(pwd)/models:/app/models \
   -e USE_GUNICORN=true \
   -e GUNICORN_WORKERS=4 \
-  -e EMBEDDING_MODEL=nomic-768 \
+  -e EMBEDDING_MODEL=nomic-moe-768 \
   nomic-embedding-api
 ```
 
@@ -91,12 +91,12 @@ Once the server is running, test it:
 # Health check
 curl http://localhost:8000/health
 
-# Create embeddings
+# Create embeddings (using latest model)
 curl -X POST "http://localhost:8000/v1/embeddings" \
   -H "Content-Type: application/json" \
   -d '{
     "input": "Hello, world!",
-    "model": "nomic-embed-text-v2-moe-distilled"
+    "model": "nomic-v1.5"
   }'
 ```
 
@@ -109,7 +109,7 @@ curl -X POST "http://localhost:8000/v1/embeddings" \
   -H "Content-Type: application/json" \
   -d '{
     "input": "This is a sample text for embedding",
-    "model": "nomic-embed-text-v2-moe-distilled"
+    "model": "nomic-v1.5"
   }'
 ```
 
@@ -124,7 +124,7 @@ curl -X POST "http://localhost:8000/v1/embeddings" \
       "Second text to embed", 
       "Third text to embed"
     ],
-    "model": "nomic-embed-text-v2-moe-distilled"
+    "model": "nomic-v1.5"
   }'
 ```
 
@@ -144,7 +144,7 @@ import requests
 # Single embedding
 response = requests.post("http://localhost:8000/v1/embeddings", json={
     "input": "Hello world",
-    "model": "nomic-embed-text-v2-moe-distilled"
+    "model": "nomic-v1.5"
 })
 
 result = response.json()
@@ -154,7 +154,7 @@ print(f"Embedding dimension: {len(embedding)}")
 # Batch embeddings
 response = requests.post("http://localhost:8000/v1/embeddings", json={
     "input": ["Text 1", "Text 2", "Text 3"],
-    "model": "nomic-embed-text-v2-moe-distilled"
+    "model": "nomic-v1.5"
 })
 
 result = response.json()
@@ -176,7 +176,7 @@ client = OpenAI(
 # Create embeddings
 response = client.embeddings.create(
     input="Hello world",
-    model="nomic-embed-text-v2-moe-distilled"
+    model="nomic-v1.5"
 )
 
 embedding = response.data[0].embedding
@@ -190,17 +190,20 @@ print(f"Embedding: {embedding[:5]}...")  # First 5 dimensions
 Set the model using environment variables:
 
 ```bash
-# Fast model (256 dimensions)
-export EMBEDDING_MODEL=nomic-256
+# Latest model (768 dimensions) - RECOMMENDED
+export EMBEDDING_MODEL=nomic-v1.5
 
-# High accuracy model (768 dimensions) 
-export EMBEDDING_MODEL=nomic-768
+# High accuracy model (768 dimensions, MoE)
+export EMBEDDING_MODEL=nomic-moe-768
+
+# Speed-optimized model (256 dimensions)
+export EMBEDDING_MODEL=nomic-moe-256
 
 # Run with specific model
 docker run -d \
   -p 8000:8000 \
   -v $(pwd)/models:/app/models \
-  -e EMBEDDING_MODEL=nomic-768 \
+  -e EMBEDDING_MODEL=nomic-v1.5 \
   nomic-embedding-api
 ```
 
@@ -208,8 +211,9 @@ docker run -d \
 
 | Preset | Model | Dimensions | Speed | Use Case |
 |--------|-------|------------|-------|----------|
-| `nomic-256` | `Abdelkareem/nomic-embed-text-v2-moe_distilled` | 256 | Ultra Fast | Real-time apps |
-| `nomic-768` | `nomic-ai/nomic-embed-text-v2-moe` | 768 | Fast | High accuracy |
+| `nomic-v1.5` | `nomic-ai/nomic-embed-text-v1.5` | 768 | **Latest & Best** | **Recommended for all use cases** |
+| `nomic-moe-768` | `nomic-ai/nomic-embed-text-v2-moe` | 768 | Fast | High accuracy applications |
+| `nomic-moe-256` | `Abdelkareem/nomic-embed-text-v2-moe_distilled` | 256 | Ultra Fast | Speed-critical applications |
 
 ## Performance Tuning
 
@@ -291,7 +295,7 @@ pytest tests/test_performance.py -v
 ### Common Issues
 
 1. **Port already in use**: Change port with `-p 8001:8000`
-2. **Out of memory**: Reduce `MODEL_POOL_SIZE` or use `nomic-256` model
+2. **Out of memory**: Reduce `MODEL_POOL_SIZE` or use `nomic-moe-256` model
 3. **Slow first request**: Models download on first use (normal)
 
 ### Performance Tips

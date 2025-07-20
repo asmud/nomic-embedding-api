@@ -195,15 +195,16 @@ Edit the `.env` file with your configuration:
 
 ```bash
 # Model Configuration
-EMBEDDING_MODEL=nomic-768              # or nomic-256 for faster inference
-USE_MODEL2VEC=false                    # Set to true for nomic-256
+EMBEDDING_MODEL=nomic-v1.5                 # Latest model (recommended)
+# EMBEDDING_MODEL=nomic-moe-768            # Alternative: High accuracy
+# EMBEDDING_MODEL=nomic-moe-256            # Alternative: Speed optimized
 
 # Server Configuration
 HOST=0.0.0.0
 PORT=8000
 LOG_LEVEL=INFO
 
-# Model Storage
+# Model Storage (uses standard HuggingFace cache format)
 HF_HOME=./models
 TRANSFORMERS_CACHE=./models
 SENTENCE_TRANSFORMERS_HOME=./models
@@ -225,7 +226,6 @@ REDIS_DB=0
 # Hardware Optimization
 ENABLE_HARDWARE_OPTIMIZATION=true
 AUTO_DEVICE_SELECTION=true
-OPTIMIZATION_LEVEL=balanced           # conservative, balanced, aggressive
 
 # Memory Management
 ENABLE_DYNAMIC_MEMORY=false
@@ -244,16 +244,20 @@ GUNICORN_TIMEOUT=300
 The application supports simplified model configuration:
 
 ```bash
-# Fast model (256 dimensions, Model2Vec)
-EMBEDDING_MODEL=nomic-256
+# Latest model (768 dimensions, best performance) - RECOMMENDED
+EMBEDDING_MODEL=nomic-v1.5
 
-# Accuracy model (768 dimensions, Transformers)
-EMBEDDING_MODEL=nomic-768
+# High accuracy model (768 dimensions, MoE architecture)
+EMBEDDING_MODEL=nomic-moe-768
+
+# Speed-optimized model (256 dimensions, Model2Vec)
+EMBEDDING_MODEL=nomic-moe-256
 ```
 
 Model details:
-- **nomic-256**: `Abdelkareem/nomic-embed-text-v2-moe_distilled` (Model2Vec, 256D)
-- **nomic-768**: `nomic-ai/nomic-embed-text-v2-moe` (Transformers, 768D)
+- **nomic-v1.5**: `nomic-ai/nomic-embed-text-v1.5` (SentenceTransformers, 768D) - **Latest & Best**
+- **nomic-moe-768**: `nomic-ai/nomic-embed-text-v2-moe` (SentenceTransformers, 768D)
+- **nomic-moe-256**: `Abdelkareem/nomic-embed-text-v2-moe_distilled` (Model2Vec, 256D)
 
 ## Production Deployment
 
@@ -273,7 +277,7 @@ services:
       - ./models:/app/models
       - ./logs:/app/logs
     environment:
-      - EMBEDDING_MODEL=nomic-768
+      - EMBEDDING_MODEL=nomic-moe-768
       - USE_GUNICORN=true
       - GUNICORN_WORKERS=4
       - MAX_CONCURRENT_REQUESTS=200
@@ -328,7 +332,7 @@ spec:
         - containerPort: 8000
         env:
         - name: EMBEDDING_MODEL
-          value: "nomic-768"
+          value: "nomic-moe-768"
         - name: USE_GUNICORN
           value: "true"
         - name: GUNICORN_WORKERS
@@ -419,7 +423,7 @@ docker run -d \
   --gpus all \
   -p 8000:8000 \
   -v $(pwd)/models:/app/models \
-  -e EMBEDDING_MODEL=nomic-768 \
+  -e EMBEDDING_MODEL=nomic-moe-768 \
   nomic-embedding-api
 ```
 
@@ -429,13 +433,13 @@ docker run -d \
 
 ```bash
 # For systems with limited memory
-EMBEDDING_MODEL=nomic-256
+EMBEDDING_MODEL=nomic-moe-256
 MODEL_POOL_SIZE=1
 MAX_CONCURRENT_REQUESTS=25
 CACHE_SIZE=500
 
 # For high-memory systems
-EMBEDDING_MODEL=nomic-768
+EMBEDDING_MODEL=nomic-moe-768
 MODEL_POOL_SIZE=4
 MAX_CONCURRENT_REQUESTS=200
 CACHE_SIZE=5000
@@ -481,7 +485,7 @@ xcode-select --install
 #### Memory Issues
 ```bash
 # Reduce memory usage
-EMBEDDING_MODEL=nomic-256
+EMBEDDING_MODEL=nomic-moe-256
 MODEL_POOL_SIZE=0
 MAX_CONCURRENT_REQUESTS=10
 ```
@@ -529,7 +533,7 @@ curl http://localhost:8000/health
 # Test embedding
 curl -X POST "http://localhost:8000/v1/embeddings" \
   -H "Content-Type: application/json" \
-  -d '{"input": "test", "model": "nomic-embed-text-v2-moe-distilled"}'
+  -d '{"input": "test", "model": "nomic-v1.5"}'
 
 # Check system stats
 curl http://localhost:8000/stats

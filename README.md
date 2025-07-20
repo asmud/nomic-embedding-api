@@ -5,20 +5,20 @@
 ![Docker](https://img.shields.io/badge/docker-supported-blue.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-latest-teal.svg)
 
-A high-performance, OpenAI-compatible REST API server for Nomic embedding models with advanced features like smart batching, caching, and multi-GPU support.
+A high-performance, OpenAI-compatible REST API server for Nomic embedding models with optimized caching, smart batching, and multi-GPU support.
 
 ## Overview
 
-Fast, production-ready embedding service that provides OpenAI-compatible endpoints using state-of-the-art Nomic embedding models. Built with FastAPI and optimized for scalability.
+Production-ready embedding service that provides OpenAI-compatible endpoints using the latest Nomic embedding models. Built with FastAPI and optimized for performance and reliability.
 
 ## Key Features
 
-- **OpenAI-Compatible API** - Drop-in replacement for OpenAI embedding endpoints
-- **High Performance** - Smart batching, caching, and Model2Vec optimization
-- **Multiple Models** - Support for various Nomic embedding models (256D, 768D)
-- **Production Ready** - Multi-worker support, health checks, monitoring
-- **Advanced Features** - Model pooling, Redis caching, hardware optimization
-- **Container Ready** - Optimized Docker builds with multi-stage architecture
+- **🔌 OpenAI-Compatible API** - Drop-in replacement for OpenAI embedding endpoints
+- **⚡ High Performance** - Smart batching, optimized caching, and hardware acceleration
+- **🎯 Latest Models** - Support for Nomic v1.5, v2-MoE, and distilled models
+- **🏭 Production Ready** - Health checks, monitoring, graceful shutdown
+- **🚀 Advanced Features** - Model pooling, Redis caching, dynamic memory management
+- **🐳 Container Ready** - Optimized Docker deployment with HuggingFace cache
 
 ## Quick Start
 
@@ -33,25 +33,28 @@ The API will be available at `http://localhost:8000` with interactive docs at `/
 ## API Usage
 
 ```bash
-# Create embeddings
+# Create embeddings with latest model
 curl -X POST "http://localhost:8000/v1/embeddings" \
   -H "Content-Type: application/json" \
-  -d '{"input": "Hello world", "model": "nomic-embed-text-v2-moe-distilled"}'
+  -d '{"input": "Hello world", "model": "nomic-v1.5"}'
+
+# List available models
+curl "http://localhost:8000/v1/models"
 
 # Using OpenAI Python client
 from openai import OpenAI
 client = OpenAI(api_key="dummy", base_url="http://localhost:8000/v1")
-response = client.embeddings.create(input="Hello world", model="nomic-embed-text-v2-moe-distilled")
+response = client.embeddings.create(input="Hello world", model="nomic-v1.5")
 ```
 
 ## Architecture
 
-- **FastAPI** - Modern, fast web framework
-- **Multi-stage Docker** - Optimized container builds
-- **Smart Batching** - Efficient request processing
-- **Model Pooling** - Scalable inference with multiple model instances
-- **Hybrid Caching** - In-memory + Redis distributed caching
-- **Hardware Optimization** - Auto device selection and performance tuning
+- **FastAPI** - Modern, async web framework with automatic OpenAPI docs
+- **HuggingFace Integration** - Standardized model caching and loading
+- **Smart Batching** - Efficient request processing with configurable timeouts
+- **Model Pooling** - Scalable inference with health monitoring
+- **Hybrid Caching** - In-memory + optional Redis distributed caching
+- **Hardware Optimization** - Auto device selection and memory management
 
 ## Documentation
 
@@ -64,10 +67,13 @@ response = client.embeddings.create(input="Hello world", model="nomic-embed-text
 
 ## Models Supported
 
-| Model | Dimensions | Speed | Use Case |
-|-------|------------|-------|----------|
-| `nomic-embed-text-v2-moe-distilled` | 256/768 | Ultra Fast | Real-time applications |
-| `nomic-embed-text-v2-moe` | 768 | Fast | High accuracy tasks |
+| Model Preset | HuggingFace Model | Dimensions | Library | Use Case |
+|--------------|-------------------|------------|---------|----------|
+| `nomic-v1.5` | `nomic-ai/nomic-embed-text-v1.5` | 768 | SentenceTransformers | **Latest & Best** - Improved performance |
+| `nomic-moe-768` | `nomic-ai/nomic-embed-text-v2-moe` | 768 | SentenceTransformers | High accuracy applications |
+| `nomic-moe-256` | `Abdelkareem/nomic-embed-text-v2-moe_distilled` | 256 | Model2Vec | Speed-optimized applications |
+
+Use `/v1/models` endpoint to see all available models with detailed information.
 
 ## Requirements
 

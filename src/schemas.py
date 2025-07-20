@@ -9,9 +9,9 @@ class EmbeddingRequest(BaseModel):
         examples=["Hello world", ["Hello world", "How are you?"]]
     )
     model: str = Field(
-        default="nomic-embed-text-v2-moe-distilled", 
-        description="Model identifier to use for generating embeddings. Currently supports 'nomic-embed-text-v2-moe-distilled'.",
-        examples=["nomic-embed-text-v2-moe-distilled"]
+        default="nomic-v1.5", 
+        description="Model preset identifier to use for generating embeddings. Use /v1/models to see all available models.",
+        examples=["nomic-v1.5", "nomic-moe-768", "nomic-moe-256"]
     )
     encoding_format: str = Field(
         default="float", 
@@ -63,9 +63,20 @@ class HealthResponse(BaseModel):
     embedding_dimension: int = Field(..., description="Embedding dimension")
 
 
+class ModelInfo(BaseModel):
+    id: str = Field(..., description="Model preset identifier")
+    object: str = Field(default="model", description="Object type")
+    created: int = Field(..., description="Creation timestamp")
+    owned_by: str = Field(default="nomic-ai", description="Model owner")
+    model_name: str = Field(..., description="HuggingFace model name")
+    dimensions: int = Field(..., description="Embedding dimensions")
+    description: str = Field(..., description="Model description")
+    use_model2vec: bool = Field(..., description="Whether this model uses Model2Vec")
+
+
 class ModelsResponse(BaseModel):
     object: str = Field(default="list", description="Object type")
-    data: List[dict] = Field(..., description="List of available models")
+    data: List[ModelInfo] = Field(..., description="List of available models")
 
 
 class StreamingEmbeddingChunk(BaseModel):

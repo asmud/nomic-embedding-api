@@ -464,7 +464,7 @@ class TestConfigurationIntegration:
     def test_model_preset_integration(self):
         """Test model preset integration"""
         # Test different model presets
-        presets = ["nomic-768", "nomic-256"]
+        presets = ["nomic-moe-768", "nomic-moe-256"]
         
         for preset in presets:
             with patch.dict(os.environ, {"EMBEDDING_MODEL": preset}):

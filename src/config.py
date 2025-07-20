@@ -17,13 +17,19 @@ MODELS_DIR.mkdir(exist_ok=True)
 
 # Model presets with automatic configuration
 MODEL_PRESETS = {
-    "nomic-768": {
+    "nomic-moe-768": {
         "model_name": "nomic-ai/nomic-embed-text-v2-moe",
         "use_model2vec": False,
         "dimensions": 768,
         "description": "Full Nomic MoE model (768 dimensions, high quality)"
     },
-    "nomic-256": {
+    "nomic-v1.5": {
+        "model_name": "nomic-ai/nomic-embed-text-v1.5",
+        "use_model2vec": False,
+        "dimensions": 768,
+        "description": "Full Nomic v1.5 model (768 dimensions, new improved)"
+    },
+    "nomic-moe-256": {
         "model_name": "Abdelkareem/nomic-embed-text-v2-moe_distilled", 
         "use_model2vec": True,
         "dimensions": 256,
@@ -32,7 +38,7 @@ MODEL_PRESETS = {
 }
 
 # Environment variables
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-768").lower()
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-moe-768").lower()
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", 8000))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -73,19 +79,15 @@ ENABLE_GC_OPTIMIZATION = os.getenv("ENABLE_GC_OPTIMIZATION", "true").lower() == 
 
 # Hardware optimization configuration
 ENABLE_HARDWARE_OPTIMIZATION = os.getenv("ENABLE_HARDWARE_OPTIMIZATION", "true").lower() == "true"
-OPTIMIZATION_LEVEL = os.getenv("OPTIMIZATION_LEVEL", "balanced").lower()  # conservative, balanced, aggressive
-ENABLE_CPU_AFFINITY = os.getenv("ENABLE_CPU_AFFINITY", "false").lower() == "true"
-ENABLE_NUMA_AWARENESS = os.getenv("ENABLE_NUMA_AWARENESS", "false").lower() == "true"
 AUTO_DEVICE_SELECTION = os.getenv("AUTO_DEVICE_SELECTION", "true").lower() == "true"
-ENABLE_TORCH_OPTIMIZATION = os.getenv("ENABLE_TORCH_OPTIMIZATION", "true").lower() == "true"
 
 # Validate and get model configuration
 if EMBEDDING_MODEL not in MODEL_PRESETS:
     import logging
     logger = logging.getLogger(__name__)
     logger.warning(f"Unknown EMBEDDING_MODEL '{EMBEDDING_MODEL}'. Available options: {list(MODEL_PRESETS.keys())}")
-    logger.warning(f"Falling back to 'nomic-768'")
-    EMBEDDING_MODEL = "nomic-768"
+    logger.warning(f"Falling back to 'nomic-moe-768'")
+    EMBEDDING_MODEL = "nomic-moe-768"
 
 # Get current model configuration
 CURRENT_MODEL_CONFIG = MODEL_PRESETS[EMBEDDING_MODEL]
@@ -93,12 +95,6 @@ MODEL_NAME = CURRENT_MODEL_CONFIG["model_name"]
 USE_MODEL2VEC = CURRENT_MODEL_CONFIG["use_model2vec"]
 EMBEDDING_DIMENSIONS = CURRENT_MODEL_CONFIG["dimensions"]
 
-# Generate cache path from model name
-def get_cache_path(model_name: str) -> Path:
-    safe_name = model_name.replace("/", "--").replace(":", "-")
-    return MODELS_DIR / safe_name
-
-MODEL_CACHE_PATH = get_cache_path(MODEL_NAME)
 
 # Cache settings
 CACHE_DIR = os.getenv("HF_HOME", str(MODELS_DIR))

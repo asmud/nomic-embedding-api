@@ -1,27 +1,16 @@
-from typing import List, Optional, Union
-import os
-import time
-from pathlib import Path
-import torch
-import numpy as np
-from sentence_transformers import SentenceTransformer
-from model2vec import StaticModel
 import logging
+import time
+from typing import List, Union
 
-from .config import (
-    MODEL_NAME,
-    USE_MODEL2VEC,
-    MODEL_CACHE_PATH,
-    EMBEDDING_DIMENSIONS,
-    TRUST_REMOTE_CODE,
-    ENABLE_QUANTIZATION,
-    TORCH_COMPILE,
-    get_cache_path,
-    MODELS_DIR,
-    ENABLE_HARDWARE_OPTIMIZATION,
-    AUTO_DEVICE_SELECTION,
-    ENABLE_TORCH_OPTIMIZATION
-)
+import numpy as np
+import torch
+from model2vec import StaticModel
+from sentence_transformers import SentenceTransformer
+
+from .config import (AUTO_DEVICE_SELECTION, EMBEDDING_DIMENSIONS,
+                     ENABLE_HARDWARE_OPTIMIZATION, ENABLE_QUANTIZATION,
+                     MODEL_NAME, MODELS_DIR, TORCH_COMPILE, TRUST_REMOTE_CODE,
+                     USE_MODEL2VEC)
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +21,6 @@ class EmbeddingModel:
         self.use_model2vec = use_model2vec if use_model2vec is not None else USE_MODEL2VEC
         self.model = None
         self.device = device
-        self.cache_path = get_cache_path(self.model_name)
         self.expected_dimensions = EMBEDDING_DIMENSIONS
         self.hardware_optimizer = None
         
@@ -43,45 +31,14 @@ class EmbeddingModel:
         self.load_model()
         self._optimize_model()
 
-    def _is_model_cached(self) -> bool:
-        """Check if model is already cached locally"""
-        if not self.cache_path.exists():
-            return False
-        
-        # Check for essential model files
-        if self.use_model2vec:
-            # Model2Vec typically has .safetensors and config.json
-            required_files = ["config.json"]
-            optional_files = ["model.safetensors", "pytorch_model.bin"]
-        else:
-            # SentenceTransformer models have these files
-            required_files = ["config.json"]
-            optional_files = ["pytorch_model.bin", "model.safetensors", "config_sentence_transformers.json"]
-        
-        # Check required files
-        for file in required_files:
-            if not (self.cache_path / file).exists():
-                return False
-        
-        # Check at least one model file exists
-        has_model_file = any((self.cache_path / file).exists() for file in optional_files)
-        
-        return has_model_file
     
     def _init_hardware_optimizer(self):
         """Initialize hardware optimizer for optimal performance"""
         try:
             from .hardware_optimizer import get_hardware_optimizer, OptimizationLevel
-            from .config import OPTIMIZATION_LEVEL
             
-            level_map = {
-                "conservative": OptimizationLevel.CONSERVATIVE,
-                "balanced": OptimizationLevel.BALANCED,
-                "aggressive": OptimizationLevel.AGGRESSIVE
-            }
-            
-            optimization_level = level_map.get(OPTIMIZATION_LEVEL, OptimizationLevel.BALANCED)
-            self.hardware_optimizer = get_hardware_optimizer(optimization_level)
+            # Use balanced optimization level as default
+            self.hardware_optimizer = get_hardware_optimizer(OptimizationLevel.BALANCED)
             
             # Select optimal device if not specified
             if AUTO_DEVICE_SELECTION and not self.device:
@@ -93,45 +50,16 @@ class EmbeddingModel:
 
     def load_model(self) -> None:
         try:
-            # Ensure cache directory exists
-            self.cache_path.mkdir(parents=True, exist_ok=True)
-            
-            if self._is_model_cached():
-                logger.info(f"Loading cached model from: {self.cache_path}")
-                model_path = str(self.cache_path)
-            else:
-                logger.info(f"Model not found in cache. Downloading: {self.model_name}")
-                model_path = self.model_name
+            logger.info(f"Loading {self.model_name}")
             
             if self.use_model2vec:
-                logger.info(f"Loading Model2Vec model: {self.model_name}")
-                if self._is_model_cached():
-                    self.model = StaticModel.from_pretrained(model_path)
-                else:
-                    # Download and cache - Model2Vec uses HF cache by default
-                    self.model = StaticModel.from_pretrained(self.model_name)
-                    # Save to our cache structure if possible
-                    try:
-                        if hasattr(self.model, 'save_pretrained'):
-                            self.model.save_pretrained(str(self.cache_path))
-                        else:
-                            logger.info("Model2Vec model downloaded, using HuggingFace cache")
-                    except Exception as e:
-                        logger.warning(f"Could not save model to custom cache: {e}")
+                self.model = StaticModel.from_pretrained(self.model_name)
             else:
-                logger.info(f"Loading SentenceTransformer model: {self.model_name}")
-                if self._is_model_cached():
-                    self.model = SentenceTransformer(model_path, trust_remote_code=TRUST_REMOTE_CODE)
-                else:
-                    # Download and cache
-                    self.model = SentenceTransformer(
-                        self.model_name,
-                        cache_folder=str(MODELS_DIR),
-                        trust_remote_code=TRUST_REMOTE_CODE
-                    )
-                    # Move to our cache structure if needed
-                    if hasattr(self.model, 'save'):
-                        self.model.save(str(self.cache_path))
+                self.model = SentenceTransformer(
+                    self.model_name,
+                    cache_folder=str(MODELS_DIR),
+                    trust_remote_code=TRUST_REMOTE_CODE
+                )
             
             logger.info("Model loaded successfully")
             
@@ -222,8 +150,7 @@ class EmbeddingModel:
     def _warmup_model(self) -> None:
         """Warm up the model with dummy inference"""
         try:
-            logger.info("Warming up model...")
-            dummy_text = ["This is a warmup text for model initialization."]
+            dummy_text = ["Warmup text"]
             _ = self.encode(dummy_text, task_type="search_document")
             logger.info("Model warmup completed")
         except Exception as e:

@@ -21,7 +21,6 @@ This directory contains a comprehensive test suite for the Nomic Embedding v2 AP
 
 - **`pytest.ini`** - Pytest configuration with coverage settings, markers, and test execution options
 - **`conftest.py`** - Shared fixtures, test environment setup, and pytest configuration
-- **`test_utils.py`** - Test utilities, helpers, and mock factories
 
 ## Running Tests
 

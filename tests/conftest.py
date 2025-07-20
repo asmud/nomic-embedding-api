@@ -193,7 +193,7 @@ def setup_test_environment():
     """Automatically set up test environment for all tests."""
     # Set test-specific environment variables
     test_env = {
-        'EMBEDDING_MODEL': 'nomic-768',
+        'EMBEDDING_MODEL': 'nomic-moe-768',
         'LOG_LEVEL': 'ERROR',  # Reduce log noise in tests
         'ENABLE_CACHING': 'true',
         'CACHE_SIZE': '100',

@@ -14,8 +14,8 @@ class TestModelPresets:
     
     def test_model_presets_structure(self):
         """Test that model presets have correct structure"""
-        assert "nomic-768" in config.MODEL_PRESETS
-        assert "nomic-256" in config.MODEL_PRESETS
+        assert "nomic-moe-768" in config.MODEL_PRESETS
+        assert "nomic-moe-256" in config.MODEL_PRESETS
         
         for preset_name, preset_config in config.MODEL_PRESETS.items():
             assert "model_name" in preset_config
@@ -30,16 +30,16 @@ class TestModelPresets:
             assert preset_config["dimensions"] > 0
     
     def test_nomic_768_preset(self):
-        """Test nomic-768 preset configuration"""
-        preset = config.MODEL_PRESETS["nomic-768"]
+        """Test nomic-moe-768 preset configuration"""
+        preset = config.MODEL_PRESETS["nomic-moe-768"]
         assert preset["model_name"] == "nomic-ai/nomic-embed-text-v2-moe"
         assert preset["use_model2vec"] is False
         assert preset["dimensions"] == 768
         assert "Full Nomic MoE model" in preset["description"]
     
     def test_nomic_256_preset(self):
-        """Test nomic-256 preset configuration"""
-        preset = config.MODEL_PRESETS["nomic-256"]
+        """Test nomic-moe-256 preset configuration"""
+        preset = config.MODEL_PRESETS["nomic-moe-256"]
         assert preset["model_name"] == "Abdelkareem/nomic-embed-text-v2-moe_distilled"
         assert preset["use_model2vec"] is True
         assert preset["dimensions"] == 256
@@ -55,14 +55,14 @@ class TestEnvironmentVariables:
             # Reload config to test defaults
             import importlib
             importlib.reload(config)
-            assert config.EMBEDDING_MODEL in ["nomic-768", "nomic-256"]
+            assert config.EMBEDDING_MODEL in ["nomic-moe-768", "nomic-moe-256"]
     
     def test_custom_embedding_model(self):
         """Test custom embedding model from environment"""
-        with patch.dict(os.environ, {"EMBEDDING_MODEL": "nomic-256"}):
+        with patch.dict(os.environ, {"EMBEDDING_MODEL": "nomic-moe-256"}):
             import importlib
             importlib.reload(config)
-            assert config.EMBEDDING_MODEL == "nomic-256"
+            assert config.EMBEDDING_MODEL == "nomic-moe-256"
     
     def test_invalid_embedding_model_fallback(self):
         """Test fallback for invalid embedding model"""
@@ -71,7 +71,7 @@ class TestEnvironmentVariables:
                 import importlib
                 importlib.reload(config)
                 mock_print.assert_called()
-                assert config.EMBEDDING_MODEL == "nomic-768"
+                assert config.EMBEDDING_MODEL == "nomic-moe-768"
     
     def test_host_and_port_defaults(self):
         """Test HOST and PORT defaults"""
@@ -193,23 +193,23 @@ class TestCurrentModelConfig:
     """Test current model configuration derivation"""
     
     def test_current_model_config_nomic_768(self):
-        """Test current model config for nomic-768"""
-        with patch.dict(os.environ, {"EMBEDDING_MODEL": "nomic-768"}):
+        """Test current model config for nomic-moe-768"""
+        with patch.dict(os.environ, {"EMBEDDING_MODEL": "nomic-moe-768"}):
             import importlib
             importlib.reload(config)
             
-            assert config.CURRENT_MODEL_CONFIG == config.MODEL_PRESETS["nomic-768"]
+            assert config.CURRENT_MODEL_CONFIG == config.MODEL_PRESETS["nomic-moe-768"]
             assert config.MODEL_NAME == "nomic-ai/nomic-embed-text-v2-moe"
             assert config.USE_MODEL2VEC is False
             assert config.EMBEDDING_DIMENSIONS == 768
     
     def test_current_model_config_nomic_256(self):
-        """Test current model config for nomic-256"""
-        with patch.dict(os.environ, {"EMBEDDING_MODEL": "nomic-256"}):
+        """Test current model config for nomic-moe-256"""
+        with patch.dict(os.environ, {"EMBEDDING_MODEL": "nomic-moe-256"}):
             import importlib
             importlib.reload(config)
             
-            assert config.CURRENT_MODEL_CONFIG == config.MODEL_PRESETS["nomic-256"]
+            assert config.CURRENT_MODEL_CONFIG == config.MODEL_PRESETS["nomic-moe-256"]
             assert config.MODEL_NAME == "Abdelkareem/nomic-embed-text-v2-moe_distilled"
             assert config.USE_MODEL2VEC is True
             assert config.EMBEDDING_DIMENSIONS == 256
