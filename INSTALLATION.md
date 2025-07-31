@@ -255,7 +255,7 @@ EMBEDDING_MODEL=nomic-moe-256
 ```
 
 Model details:
-- **nomic-v1.5**: `nomic-ai/nomic-embed-text-v1.5` (SentenceTransformers, 768D) - **Latest & Best**
+- **nomic-v1.5**: `asmud/nomic-embed-indonesian` (SentenceTransformers, 768D) - **Latest & Best**
 - **nomic-moe-768**: `nomic-ai/nomic-embed-text-v2-moe` (SentenceTransformers, 768D)
 - **nomic-moe-256**: `Abdelkareem/nomic-embed-text-v2-moe_distilled` (Model2Vec, 256D)
 

@@ -69,7 +69,7 @@ response = client.embeddings.create(input="Hello world", model="nomic-v1.5")
 
 | Model Preset | HuggingFace Model | Dimensions | Library | Use Case |
 |--------------|-------------------|------------|---------|----------|
-| `nomic-v1.5` | `nomic-ai/nomic-embed-text-v1.5` | 768 | SentenceTransformers | **Latest & Best** - Improved performance |
+| `nomic-v1.5` | `asmud/nomic-embed-indonesian` | 768 | SentenceTransformers | **Latest & Best** - Improved performance |
 | `nomic-moe-768` | `nomic-ai/nomic-embed-text-v2-moe` | 768 | SentenceTransformers | High accuracy applications |
 | `nomic-moe-256` | `Abdelkareem/nomic-embed-text-v2-moe_distilled` | 256 | Model2Vec | Speed-optimized applications |
 

@@ -24,7 +24,7 @@ MODEL_PRESETS = {
         "description": "Full Nomic MoE model (768 dimensions, high quality)"
     },
     "nomic-v1.5": {
-        "model_name": "nomic-ai/nomic-embed-text-v1.5",
+        "model_name": "asmud/nomic-embed-indonesian",
         "use_model2vec": False,
         "dimensions": 768,
         "description": "Full Nomic v1.5 model (768 dimensions, new improved)"

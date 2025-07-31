@@ -211,7 +211,7 @@ docker run -d \
 
 | Preset | Model | Dimensions | Speed | Use Case |
 |--------|-------|------------|-------|----------|
-| `nomic-v1.5` | `nomic-ai/nomic-embed-text-v1.5` | 768 | **Latest & Best** | **Recommended for all use cases** |
+| `nomic-v1.5` | `asmud/nomic-embed-indonesian` | 768 | **Latest & Best** | **Recommended for all use cases** |
 | `nomic-moe-768` | `nomic-ai/nomic-embed-text-v2-moe` | 768 | Fast | High accuracy applications |
 | `nomic-moe-256` | `Abdelkareem/nomic-embed-text-v2-moe_distilled` | 256 | Ultra Fast | Speed-critical applications |
 
